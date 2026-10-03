@@ -5,6 +5,8 @@ import Auth from './components/Auth.jsx'
 import Search from './components/Search.jsx'
 import Library from './components/Library.jsx'
 import LocationManager from './components/LocationManager.jsx'
+import PsnPanel from './components/PsnPanel.jsx'
+import usePsn from './lib/usePsn.js'
 
 const byName = (a, b) => a.name.localeCompare(b.name)
 
@@ -19,6 +21,7 @@ export default function App() {
   const [games, setGames] = useState([])
   const [locations, setLocations] = useState([])
   const [managingLocations, setManagingLocations] = useState(false)
+  const [showPsn, setShowPsn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -123,8 +126,22 @@ export default function App() {
       .select()
       .single()
     if (error) throw error
-    setGames((gs) => [{ ...data, location_ids: [] }, ...gs])
+    const added = { ...data, location_ids: [] }
+    setGames((gs) => [added, ...gs])
+    return added
   }, [])
+
+  const psn = usePsn({ userId, games, addGame })
+  const { matchNewGame } = psn
+
+  // Games added from search get linked to a matching trophy list if there is one.
+  const addAndMatch = useCallback(
+    async (game, status) => {
+      const added = await addGame(game, status)
+      matchNewGame(added)
+    },
+    [addGame, matchNewGame],
+  )
 
   const updateGame = useCallback(async (id, patch) => {
     const { data, error } = await supabase
@@ -201,6 +218,9 @@ export default function App() {
             Search
           </button>
         </nav>
+        <button className="ghost psn-button" onClick={() => setShowPsn(true)}>
+          {psn.account ? `PSN: ${psn.account.online_id}` : 'Connect PSN'}
+        </button>
         <div className="user">
           <span>{session.user.email}</span>
           <button className="ghost" onClick={() => supabase.auth.signOut()}>
@@ -211,6 +231,7 @@ export default function App() {
 
       <main>
         {error && <p className="error">{error}</p>}
+        {psn.error && <p className="error">{psn.error}</p>}
         {tab === 'library' ? (
           <Library
             games={games}
@@ -219,12 +240,13 @@ export default function App() {
             onAddLocation={addLocation}
             onSetLocations={setGameLocations}
             onManageLocations={openLocationManager}
+            psn={psn}
             onUpdate={updateGame}
             onRemove={removeGame}
             onGoSearch={() => setTab('search')}
           />
         ) : rawgConfigured ? (
-          <Search ownedIds={ownedIds} onAdd={addGame} />
+          <Search ownedIds={ownedIds} onAdd={addAndMatch} />
         ) : (
           <Notice title="RAWG is not configured">
             Set <code>VITE_RAWG_API_KEY</code> to enable search.
@@ -241,6 +263,8 @@ export default function App() {
           onClose={closeLocationManager}
         />
       )}
+
+      {showPsn && <PsnPanel psn={psn} onClose={() => setShowPsn(false)} />}
 
       <footer>
         Game data from{' '}

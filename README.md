@@ -16,6 +16,9 @@ deployed to GitHub Pages by GitHub Actions.
 - Per-game details: playtime, rating (1–10), dates, notes
 - "Where" multi-select on each game (Steam, PS5 disc, Game Pass, …). Tick as many as
   apply; each user's list grows as they add entries, and the library can be filtered by it
+- PlayStation trophies: connect a PSN online ID, sync trophy progress onto matching games
+  (progress bar, per-grade counts, platinum badge), fix matches by hand, and import games
+  from your PSN trophy list into the library
 - Manage locations: rename or delete your places from the library toolbar or the bottom of
   any game's Where checklist (deleting removes the place from every game that had it)
 
@@ -46,6 +49,42 @@ no longer used.)
 
 RLS is enabled on all three tables with policies restricted to `auth.uid() = user_id`
 (links have select/insert/delete only), so each user only ever sees their own rows.
+
+## PlayStation trophies
+
+PSN has no official public API, so this uses the same unofficial API as the PlayStation
+app via [`psn-api`](https://github.com/achievements-app/psn-api). It can change or break
+without notice, and it is not endorsed by Sony.
+
+How it fits together:
+
+- `supabase/functions/psn-sync` (Edge Function) is the only code that talks to PSN. It
+  signs in with **one** PSN login owned by the app owner (the `PSN_NPSSO` secret) and reads
+  *public* trophy data, so users never give the app their PSN credentials. It runs with
+  the caller's JWT, so all writes go through RLS.
+- `supabase/migrations/20261003030000_create_psn_trophies.sql` adds `psn_accounts`
+  (online ID → account ID), `psn_trophy_titles` (each trophy list with progress and
+  per-grade counts) and `game_trophy_links` (game ↔ trophy list). All are per-user RLS.
+- Matching games to trophy lists happens in the browser (`src/lib/psn.js`): titles are
+  normalised (™/®, accents, punctuation, `&`/`and`) and compared exactly, or with a known
+  edition/platform suffix such as "Director's Cut". PS5 lists win over PS4 ones. Any match
+  can be changed or removed from the game card, and manual choices are never overwritten.
+- Import looks each selected trophy list up on RAWG, adds the game (status from progress:
+  platinum/100% → Completed, >0% → Playing, else Backlog) and links it.
+
+Users need their trophies visible to **Anyone** (PS5: Settings → Users and Accounts →
+Privacy → Gaming | Media → Trophies).
+
+### Setting the PSN_NPSSO secret
+
+1. In a browser, sign in at https://www.playstation.com with the PSN account the app
+   should use (any account works; a spare one is fine).
+2. In the same browser, open https://ca.account.sony.com/api/v1/ssocookie and copy the
+   64-character `npsso` value.
+3. In Supabase → Edge Functions → Secrets, add `PSN_NPSSO` with that value.
+
+The token lasts about two months. When it expires, syncing shows "The server's PSN login
+has expired"; repeat the steps above.
 
 ## Local development
 

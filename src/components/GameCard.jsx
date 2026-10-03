@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { STATUSES, statusPatch } from '../lib/statuses.js'
 import { Cover } from './Search.jsx'
 import LocationPicker from './LocationPicker.jsx'
+import TrophyInfo from './TrophyInfo.jsx'
+import { Cup } from './TrophyCounts.jsx'
 
 export default function GameCard({
   game,
@@ -11,6 +13,8 @@ export default function GameCard({
   onAddLocation,
   onSetLocations,
   onManageLocations,
+  psn,
+  games,
 }) {
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -39,6 +43,11 @@ export default function GameCard({
   return (
     <article className={`card status-${game.status}`}>
       <Cover src={game.cover_url} title={game.title} />
+      {hasPlatinum(game, psn) && (
+        <span className="platinum-badge" title="Platinum earned">
+          <Cup /> Platinum
+        </span>
+      )}
       <span className="badge">{STATUSES.find((s) => s.value === game.status)?.label}</span>
       <div className="card-body">
         <h3>{game.title}</h3>
@@ -67,6 +76,7 @@ export default function GameCard({
           onManage={onManageLocations}
           onChange={(ids) => run(() => onSetLocations(game.id, ids))}
         />
+        {psn.account && <TrophyInfo game={game} psn={psn} games={games} />}
 
         {editing ? (
           <DetailsForm
@@ -91,6 +101,11 @@ export default function GameCard({
       </div>
     </article>
   )
+}
+
+function hasPlatinum(game, psn) {
+  const np = psn.linkByGame[game.id]?.np_communication_id
+  return np ? psn.titlesById[np]?.earned_platinum > 0 : false
 }
 
 const blankToNull = (v) => (v === '' ? null : v)

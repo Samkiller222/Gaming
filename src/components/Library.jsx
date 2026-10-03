@@ -25,6 +25,7 @@ export default function Library({
   onAddLocation,
   onSetLocations,
   onManageLocations,
+  psn,
   onGoSearch,
 }) {
   const [status, setStatus] = useState('all')
@@ -161,6 +162,8 @@ export default function Library({
               onAddLocation={onAddLocation}
               onSetLocations={onSetLocations}
               onManageLocations={onManageLocations}
+              psn={psn}
+              games={games}
             />
           ))}
         </div>
