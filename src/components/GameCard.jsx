@@ -3,7 +3,14 @@ import { STATUSES, statusPatch } from '../lib/statuses.js'
 import { Cover } from './Search.jsx'
 import LocationPicker from './LocationPicker.jsx'
 
-export default function GameCard({ game, locations, onUpdate, onRemove, onAddLocation }) {
+export default function GameCard({
+  game,
+  locations,
+  onUpdate,
+  onRemove,
+  onAddLocation,
+  onSetLocations,
+}) {
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -52,11 +59,11 @@ export default function GameCard({ game, locations, onUpdate, onRemove, onAddLoc
           ))}
         </select>
         <LocationPicker
-          value={game.location_id}
+          value={game.location_ids}
           locations={locations}
           disabled={busy}
           onAddLocation={onAddLocation}
-          onChange={(location_id) => run(() => onUpdate(game.id, { location_id }))}
+          onChange={(ids) => run(() => onSetLocations(game.id, ids))}
         />
 
         {editing ? (

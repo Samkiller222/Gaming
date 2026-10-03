@@ -34,13 +34,21 @@ export default function App() {
     }
     setLoading(true)
     Promise.all([
-      supabase.from('games').select('*').order('added_at', { ascending: false }),
+      supabase
+        .from('games')
+        .select('*, links:game_location_links(location_id)')
+        .order('added_at', { ascending: false }),
       supabase.from('game_locations').select('*').order('name'),
     ]).then(([games, locations]) => {
       const err = games.error ?? locations.error
       if (err) setError(err.message)
       else {
-        setGames(games.data)
+        setGames(
+          games.data.map(({ links, ...g }) => ({
+            ...g,
+            location_ids: links.map((l) => l.location_id),
+          })),
+        )
         setLocations(locations.data)
       }
       setLoading(false)
@@ -79,7 +87,7 @@ export default function App() {
       .select()
       .single()
     if (error) throw error
-    setGames((gs) => [data, ...gs])
+    setGames((gs) => [{ ...data, location_ids: [] }, ...gs])
   }, [])
 
   const updateGame = useCallback(async (id, patch) => {
@@ -90,8 +98,41 @@ export default function App() {
       .select()
       .single()
     if (error) throw error
-    setGames((gs) => gs.map((g) => (g.id === id ? data : g)))
+    setGames((gs) => gs.map((g) => (g.id === id ? { ...g, ...data } : g)))
   }, [])
+
+  // Sync a game's locations to `ids` by inserting/deleting only the differences.
+  // The UI updates immediately and rolls back if either request fails.
+  const setGameLocations = useCallback(
+    async (gameId, ids) => {
+      const current = games.find((g) => g.id === gameId)?.location_ids ?? []
+      const added = ids.filter((id) => !current.includes(id))
+      const removed = current.filter((id) => !ids.includes(id))
+      const apply = (location_ids) =>
+        setGames((gs) => gs.map((g) => (g.id === gameId ? { ...g, location_ids } : g)))
+      apply(ids)
+      try {
+        if (added.length) {
+          const { error } = await supabase
+            .from('game_location_links')
+            .insert(added.map((location_id) => ({ game_id: gameId, location_id })))
+          if (error) throw error
+        }
+        if (removed.length) {
+          const { error } = await supabase
+            .from('game_location_links')
+            .delete()
+            .eq('game_id', gameId)
+            .in('location_id', removed)
+          if (error) throw error
+        }
+      } catch (e) {
+        apply(current)
+        throw e
+      }
+    },
+    [games],
+  )
 
   const removeGame = useCallback(async (id) => {
     const { error } = await supabase.from('games').delete().eq('id', id)
@@ -140,6 +181,7 @@ export default function App() {
             locations={locations}
             loading={loading}
             onAddLocation={addLocation}
+            onSetLocations={setGameLocations}
             onUpdate={updateGame}
             onRemove={removeGame}
             onGoSearch={() => setTab('search')}

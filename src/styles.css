@@ -100,7 +100,7 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 0
 .filters input { flex: 1 1 200px; }
 
 /* Grid */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; align-items: start; }
 .card {
   position: relative; display: flex; flex-direction: column;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
@@ -140,9 +140,25 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 0
 }
 
 /* Where-I-own-it picker */
-.location { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: var(--muted); }
-.location select { flex: 1; color: var(--text); font-size: 0.95rem; }
-.location-add { display: flex; flex-wrap: wrap; gap: 6px; }
-.location-add input { flex: 1 1 0; }
-.location-add button { padding: 6px 10px; }
+.location { display: flex; flex-direction: column; gap: 6px; }
+.location-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 6px 10px;
+}
+.location-label { color: var(--muted); font-size: 0.85em; }
+.location-chips { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.chip {
+  background: var(--surface-2); border-radius: 999px; padding: 1px 8px; font-size: 0.8em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.location-panel {
+  display: flex; flex-direction: column; gap: 4px; padding: 8px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+}
+.location-panel .muted { margin: 0; font-size: 0.85em; }
+.location-option { display: flex; align-items: center; gap: 8px; padding: 3px 2px; cursor: pointer; font-size: 0.9em; }
+.location-option input { margin: 0; accent-color: var(--accent); }
+.location-add { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.location-add input { flex: 1 1 0; padding: 5px 8px; }
+.location-add button { padding: 5px 10px; }
 .location-add .error { flex-basis: 100%; margin: 0; }

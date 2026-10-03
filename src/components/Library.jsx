@@ -23,6 +23,7 @@ export default function Library({
   onUpdate,
   onRemove,
   onAddLocation,
+  onSetLocations,
   onGoSearch,
 }) {
   const [status, setStatus] = useState('all')
@@ -50,7 +51,7 @@ export default function Library({
           (!platform || g.platforms.includes(platform)) &&
           (!genre || g.genres.includes(genre)) &&
           (!location ||
-            (location === NONE ? g.location_id == null : g.location_id === location)) &&
+            (location === NONE ? g.location_ids.length === 0 : g.location_ids.includes(location))) &&
           (!t || g.title.toLowerCase().includes(t)),
       )
       .sort(SORTS[sort].fn)
@@ -149,6 +150,7 @@ export default function Library({
               onUpdate={onUpdate}
               onRemove={onRemove}
               onAddLocation={onAddLocation}
+              onSetLocations={onSetLocations}
             />
           ))}
         </div>
