@@ -24,12 +24,16 @@ export default function Library({
   onRemove,
   onAddLocation,
   onSetLocations,
+  onManageLocations,
   onGoSearch,
 }) {
   const [status, setStatus] = useState('all')
   const [platform, setPlatform] = useState('')
   const [genre, setGenre] = useState('')
-  const [location, setLocation] = useState('')
+  const [locationFilter, setLocation] = useState('')
+  // Fall back to "all" if the filtered location is deleted.
+  const location =
+    locationFilter === NONE || locations.some((l) => l.id === locationFilter) ? locationFilter : ''
   const [text, setText] = useState('')
   const [sort, setSort] = useState('added')
 
@@ -115,6 +119,11 @@ export default function Library({
             <option value={NONE}>Location not set</option>
           </select>
         )}
+        {locations.length > 0 && (
+          <button className="ghost" onClick={onManageLocations}>
+            Manage locations
+          </button>
+        )}
         <select value={sort} onChange={(e) => setSort(e.target.value)}>
           {Object.entries(SORTS).map(([k, s]) => (
             <option key={k} value={k}>
@@ -151,6 +160,7 @@ export default function Library({
               onRemove={onRemove}
               onAddLocation={onAddLocation}
               onSetLocations={onSetLocations}
+              onManageLocations={onManageLocations}
             />
           ))}
         </div>

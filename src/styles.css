@@ -162,3 +162,26 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: 0
 .location-add input { flex: 1 1 0; padding: 5px 8px; }
 .location-add button { padding: 5px 10px; }
 .location-add .error { flex-basis: 100%; margin: 0; }
+.manage-link { align-self: flex-start; font-size: 0.8em; padding: 2px 0; }
+
+/* Manage-locations modal */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 10; background: rgb(0 0 0 / 0.45);
+  display: grid; place-items: center; padding: 16px;
+}
+.modal {
+  width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.modal-head h2 { font-size: 1.15rem; }
+.modal-head button { padding: 4px 10px; }
+.location-list { list-style: none; margin: 0; padding: 0; }
+.location-list li { padding: 8px 0; border-top: 1px solid var(--border); }
+.location-list li:first-child { border-top: 0; }
+.location-list .error { margin: 6px 0 0; }
+.location-row { display: flex; align-items: center; gap: 8px; }
+.location-row input { flex: 1; }
+.location-row button { padding: 5px 10px; font-size: 0.9em; }
+.location-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.location-row .count { font-size: 0.8em; white-space: nowrap; }

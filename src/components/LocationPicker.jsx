@@ -3,7 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 // Multi-select of the user's own locations. The toggle shows what's picked;
 // opening it reveals a checklist plus a field that adds a new location to the
 // user's list and ticks it for this game.
-export default function LocationPicker({ value, locations, onChange, onAddLocation, disabled }) {
+export default function LocationPicker({
+  value,
+  locations,
+  onChange,
+  onAddLocation,
+  onManage,
+  disabled,
+}) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
@@ -93,6 +100,18 @@ export default function LocationPicker({ value, locations, onChange, onAddLocati
             </button>
             {error && <p className="error">{error}</p>}
           </form>
+          {locations.length > 0 && (
+            <button
+              type="button"
+              className="link manage-link"
+              onClick={() => {
+                setOpen(false)
+                onManage()
+              }}
+            >
+              Rename or delete locations…
+            </button>
+          )}
         </div>
       )}
     </div>

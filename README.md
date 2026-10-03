@@ -16,6 +16,8 @@ deployed to GitHub Pages by GitHub Actions.
 - Per-game details: playtime, rating (1–10), dates, notes
 - "Where" multi-select on each game (Steam, PS5 disc, Game Pass, …). Tick as many as
   apply; each user's list grows as they add entries, and the library can be filtered by it
+- Manage locations: rename or delete your places from the library toolbar or the bottom of
+  any game's Where checklist (deleting removes the place from every game that had it)
 
 ## Database
 

@@ -10,6 +10,7 @@ export default function GameCard({
   onRemove,
   onAddLocation,
   onSetLocations,
+  onManageLocations,
 }) {
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -63,6 +64,7 @@ export default function GameCard({
           locations={locations}
           disabled={busy}
           onAddLocation={onAddLocation}
+          onManage={onManageLocations}
           onChange={(ids) => run(() => onSetLocations(game.id, ids))}
         />
 

@@ -4,6 +4,13 @@ import { rawgConfigured } from './lib/rawg.js'
 import Auth from './components/Auth.jsx'
 import Search from './components/Search.jsx'
 import Library from './components/Library.jsx'
+import LocationManager from './components/LocationManager.jsx'
+
+const byName = (a, b) => a.name.localeCompare(b.name)
+
+// Turn the unique-name index violation into a readable message.
+const locationError = (error, name) =>
+  error.code === '23505' ? new Error(`You already have a location called “${name}”.`) : error
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -11,6 +18,7 @@ export default function App() {
   const [tab, setTab] = useState('library')
   const [games, setGames] = useState([])
   const [locations, setLocations] = useState([])
+  const [managingLocations, setManagingLocations] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -66,12 +74,40 @@ export default function App() {
         .insert({ name })
         .select()
         .single()
-      if (error) throw error
-      setLocations((ls) => [...ls, data].sort((a, b) => a.name.localeCompare(b.name)))
+      if (error) throw locationError(error, name)
+      setLocations((ls) => [...ls, data].sort(byName))
       return data
     },
     [locations],
   )
+
+  const renameLocation = useCallback(async (id, name) => {
+    const { data, error } = await supabase
+      .from('game_locations')
+      .update({ name })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw locationError(error, name)
+    setLocations((ls) => ls.map((l) => (l.id === id ? data : l)).sort(byName))
+  }, [])
+
+  // Links are removed by the database (on delete cascade); mirror that locally.
+  const deleteLocation = useCallback(async (id) => {
+    const { error } = await supabase.from('game_locations').delete().eq('id', id)
+    if (error) throw error
+    setLocations((ls) => ls.filter((l) => l.id !== id))
+    setGames((gs) =>
+      gs.map((g) =>
+        g.location_ids.includes(id)
+          ? { ...g, location_ids: g.location_ids.filter((x) => x !== id) }
+          : g,
+      ),
+    )
+  }, [])
+
+  const openLocationManager = useCallback(() => setManagingLocations(true), [])
+  const closeLocationManager = useCallback(() => setManagingLocations(false), [])
 
   const addGame = useCallback(async (game, status) => {
     const { data, error } = await supabase
@@ -182,6 +218,7 @@ export default function App() {
             loading={loading}
             onAddLocation={addLocation}
             onSetLocations={setGameLocations}
+            onManageLocations={openLocationManager}
             onUpdate={updateGame}
             onRemove={removeGame}
             onGoSearch={() => setTab('search')}
@@ -194,6 +231,16 @@ export default function App() {
           </Notice>
         )}
       </main>
+
+      {managingLocations && (
+        <LocationManager
+          locations={locations}
+          games={games}
+          onRename={renameLocation}
+          onDelete={deleteLocation}
+          onClose={closeLocationManager}
+        />
+      )}
 
       <footer>
         Game data from{' '}
