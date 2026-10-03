@@ -14,6 +14,8 @@ deployed to GitHub Pages by GitHub Actions.
   title, rating or playtime
 - Status changes from the card (starting/finishing a game stamps `started_at`/`finished_at`)
 - Per-game details: playtime, rating (1–10), dates, notes
+- "Where" dropdown on each game (Steam, PS5 disc, Game Pass, …). Each user's list grows
+  as they add entries via "+ Add new…", and the library can be filtered by it
 
 ## Database
 
@@ -31,8 +33,15 @@ deployed to GitHub Pages by GitHub Actions.
 | `rating` | smallint 1–10 |
 | `started_at`, `finished_at` | date |
 | `added_at` | timestamptz |
+| `location_id` | uuid → `game_locations`, nullable |
 
-RLS is enabled with select/insert/update/delete policies restricted to
+`supabase/migrations/20261003010000_create_game_locations.sql` creates
+`public.game_locations` (`id`, `user_id`, `name`, `created_at`), unique per user
+(case-insensitive). A composite foreign key `(location_id, user_id)` ensures a game can
+only reference a location owned by the same user; deleting a location clears it from
+those games.
+
+RLS is enabled on both tables with select/insert/update/delete policies restricted to
 `auth.uid() = user_id`, so each user only ever sees their own rows.
 
 ## Local development

@@ -12,12 +12,23 @@ const SORTS = {
   },
 }
 
+const NONE = '__none__'
+
 const uniqueSorted = (lists) => [...new Set(lists.flat())].sort((a, b) => a.localeCompare(b))
 
-export default function Library({ games, loading, onUpdate, onRemove, onGoSearch }) {
+export default function Library({
+  games,
+  locations,
+  loading,
+  onUpdate,
+  onRemove,
+  onAddLocation,
+  onGoSearch,
+}) {
   const [status, setStatus] = useState('all')
   const [platform, setPlatform] = useState('')
   const [genre, setGenre] = useState('')
+  const [location, setLocation] = useState('')
   const [text, setText] = useState('')
   const [sort, setSort] = useState('added')
 
@@ -38,10 +49,12 @@ export default function Library({ games, loading, onUpdate, onRemove, onGoSearch
           (status === 'all' || g.status === status) &&
           (!platform || g.platforms.includes(platform)) &&
           (!genre || g.genres.includes(genre)) &&
+          (!location ||
+            (location === NONE ? g.location_id == null : g.location_id === location)) &&
           (!t || g.title.toLowerCase().includes(t)),
       )
       .sort(SORTS[sort].fn)
-  }, [games, status, platform, genre, text, sort])
+  }, [games, status, platform, genre, location, text, sort])
 
   if (loading) return <p className="muted">Loading your library…</p>
 
@@ -55,7 +68,7 @@ export default function Library({ games, loading, onUpdate, onRemove, onGoSearch
     )
   }
 
-  const filtered = status !== 'all' || platform || genre || text
+  const filtered = status !== 'all' || platform || genre || location || text
 
   return (
     <section>
@@ -90,6 +103,17 @@ export default function Library({ games, loading, onUpdate, onRemove, onGoSearch
             <option key={g}>{g}</option>
           ))}
         </select>
+        {locations.length > 0 && (
+          <select value={location} onChange={(e) => setLocation(e.target.value)}>
+            <option value="">All locations</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
+              </option>
+            ))}
+            <option value={NONE}>Location not set</option>
+          </select>
+        )}
         <select value={sort} onChange={(e) => setSort(e.target.value)}>
           {Object.entries(SORTS).map(([k, s]) => (
             <option key={k} value={k}>
@@ -104,6 +128,7 @@ export default function Library({ games, loading, onUpdate, onRemove, onGoSearch
               setStatus('all')
               setPlatform('')
               setGenre('')
+              setLocation('')
               setText('')
             }}
           >
@@ -117,7 +142,14 @@ export default function Library({ games, loading, onUpdate, onRemove, onGoSearch
       ) : (
         <div className="grid">
           {visible.map((g) => (
-            <GameCard key={g.id} game={g} onUpdate={onUpdate} onRemove={onRemove} />
+            <GameCard
+              key={g.id}
+              game={g}
+              locations={locations}
+              onUpdate={onUpdate}
+              onRemove={onRemove}
+              onAddLocation={onAddLocation}
+            />
           ))}
         </div>
       )}

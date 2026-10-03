@@ -10,6 +10,7 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false)
   const [tab, setTab] = useState('library')
   const [games, setGames] = useState([])
+  const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -28,19 +29,41 @@ export default function App() {
   useEffect(() => {
     if (!userId) {
       setGames([])
+      setLocations([])
       return
     }
     setLoading(true)
-    supabase
-      .from('games')
-      .select('*')
-      .order('added_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        else setGames(data)
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('games').select('*').order('added_at', { ascending: false }),
+      supabase.from('game_locations').select('*').order('name'),
+    ]).then(([games, locations]) => {
+      const err = games.error ?? locations.error
+      if (err) setError(err.message)
+      else {
+        setGames(games.data)
+        setLocations(locations.data)
+      }
+      setLoading(false)
+    })
   }, [userId])
+
+  // Reuse an existing location when the name matches case-insensitively,
+  // otherwise add it to this user's list.
+  const addLocation = useCallback(
+    async (name) => {
+      const existing = locations.find((l) => l.name.toLowerCase() === name.toLowerCase())
+      if (existing) return existing
+      const { data, error } = await supabase
+        .from('game_locations')
+        .insert({ name })
+        .select()
+        .single()
+      if (error) throw error
+      setLocations((ls) => [...ls, data].sort((a, b) => a.name.localeCompare(b.name)))
+      return data
+    },
+    [locations],
+  )
 
   const addGame = useCallback(async (game, status) => {
     const { data, error } = await supabase
@@ -114,7 +137,9 @@ export default function App() {
         {tab === 'library' ? (
           <Library
             games={games}
+            locations={locations}
             loading={loading}
+            onAddLocation={addLocation}
             onUpdate={updateGame}
             onRemove={removeGame}
             onGoSearch={() => setTab('search')}

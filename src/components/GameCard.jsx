@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { STATUSES, statusPatch } from '../lib/statuses.js'
 import { Cover } from './Search.jsx'
+import LocationPicker from './LocationPicker.jsx'
 
-export default function GameCard({ game, onUpdate, onRemove }) {
+export default function GameCard({ game, locations, onUpdate, onRemove, onAddLocation }) {
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -50,6 +51,13 @@ export default function GameCard({ game, onUpdate, onRemove }) {
             </option>
           ))}
         </select>
+        <LocationPicker
+          value={game.location_id}
+          locations={locations}
+          disabled={busy}
+          onAddLocation={onAddLocation}
+          onChange={(location_id) => run(() => onUpdate(game.id, { location_id }))}
+        />
 
         {editing ? (
           <DetailsForm
